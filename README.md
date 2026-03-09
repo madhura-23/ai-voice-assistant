@@ -249,22 +249,3 @@ Contributions are welcome! Feel free to:
 3. Make your changes
 4. Submit a pull request
 
-## 📞 Support
-
-- 📖 [Claude API Docs](https://docs.claude.com)
-- 🆘 [MDN Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API)
-- 💬 [Discord Community](https://discord.gg/anthropic)
-
-## 🎉 Showcase
-
-This project is perfect for showcasing on:
-- **GitHub** - Great starter project for voice AI
-- **LinkedIn** - Impressive portfolio piece
-- **HackerNews** - Interesting tech demo
-- **Product Hunt** - Potential feature product
-
----
-
-**Made with ❤️ using React and Claude AI**
-
-[⬆ back to top](#-ai-voice-assistant)
