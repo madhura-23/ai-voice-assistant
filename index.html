@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Voice Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-fadeIn {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .animate-pulse-subtle {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        .bubble-animate {
+            animation: bounce 0.6s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .mic-pulse {
+            box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7);
+            animation: pulse-ring 1.5s infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 20px rgba(6, 182, 212, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(6, 182, 212, 0);
+            }
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white">
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <div class="border-b border-slate-700/50 bg-gradient-to-r from-slate-900/80 to-slate-800/80 backdrop-blur-md">
+            <div class="max-w-4xl mx-auto px-6 py-8">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728m-.9-1.415a7 7 0 010-9.9M6.586 15.464a5 5 0 010-7.072m-2.828 9.9a9 9 0 010-12.728m.9 1.415a7 7 0 010 9.9"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-white tracking-tight">Voice Assistant</h1>
+                        <p class="text-slate-400 text-sm">Powered by Claude AI</p>
+                    </div>
+                </div>
+
+                <div id="keyInputSection" class="flex gap-2">
+                    <input
+                        id="apiKeyInput"
+                        type="password"
+                        placeholder="Enter your Claude API key..."
+                        class="flex-1 px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-600 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                    />
+                    <button
+                        id="setKeyBtn"
+                        class="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg font-medium hover:from-cyan-600 hover:to-blue-700 transition-all"
+                    >
+                        Set Key
+                    </button>
+                </div>
+
+                <div id="keyConfirm" class="hidden flex items-center gap-2 text-sm text-slate-400">
+                    <div class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse-subtle"></div>
+                    API Key configured
+                    <button id="changeKeyBtn" class="ml-auto text-cyan-400 hover:text-cyan-300">
+                        Change
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="flex-1 overflow-y-auto px-6 py-8">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div id="emptyState" class="flex flex-col items-center justify-center min-h-[400px] text-center">
+                    <div class="mb-6">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-10 h-10 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white mb-2">Ready to talk?</h2>
+                    <p class="text-slate-400 mb-8">Press the microphone button or type to start a conversation</p>
+                    <div class="flex gap-2 text-sm text-slate-500">
+                        <span>🎤 Voice Input</span>
+                        <span>•</span>
+                        <span>🤖 AI Powered</span>
+                        <span>•</span>
+                        <span>🔊 Voice Output</span>
+                    </div>
+                </div>
+
+                <div id="messagesContainer" class="space-y-6"></div>
+                <div id="loadingIndicator" class="hidden flex gap-4 justify-start">
+                    <div class="max-w-2xl px-5 py-4 rounded-2xl rounded-bl-sm bg-slate-800/80 border border-slate-700/50">
+                        <div class="flex gap-2">
+                            <div class="w-2 h-2 rounded-full bg-cyan-400 bubble-animate"></div>
+                            <div class="w-2 h-2 rounded-full bg-cyan-400 bubble-animate" style="animation-delay: 0.1s;"></div>
+                            <div class="w-2 h-2 rounded-full bg-cyan-400 bubble-animate" style="animation-delay: 0.2s;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="border-t border-slate-700/50 bg-gradient-to-t from-slate-900/90 to-slate-900/50 backdrop-blur-md">
+            <div class="max-w-4xl mx-auto px-6 py-6">
+                <div id="errorMessage" class="hidden mb-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm"></div>
+
+                <div id="transcriptBox" class="hidden mb-4 p-4 rounded-lg bg-slate-800/50 border border-slate-700 text-slate-200 text-sm">
+                    <p class="text-slate-400 text-xs uppercase mb-2">Transcript</p>
+                    <p id="transcriptText"></p>
+                </div>
+
+                <div class="flex gap-3">
+                    <button
+                        id="micBtn"
+                        class="flex-1 py-4 px-6 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4"></path>
+                        </svg>
+                        <span id="micBtnText">Start Recording</span>
+                    </button>
+
+                    <button
+                        id="sendBtn"
+                        class="hidden py-4 px-6 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                    </button>
+
+                    <button
+                        id="clearBtn"
+                        class="hidden py-4 px-6 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <p class="text-slate-500 text-xs mt-4">
+                    💡 Tip: Click "Start Recording" to speak, or type your message and hit send
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let apiKey = '';
+        let messages = [];
+        let isListening = false;
+        let isProcessing = false;
+        let transcript = '';
+        let recognition = null;
+
+        // Initialize Speech Recognition
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                isListening = true;
+                updateUI();
+            };
+
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const t = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        transcript = t;
+                    } else {
+                        interimTranscript += t;
+                    }
+                }
+                updateUI();
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                updateUI();
+            };
+
+            recognition.onerror = (event) => {
+                showError(`Error: ${event.error}`);
+                isListening = false;
+                updateUI();
+            };
+        }
+
+        // DOM Elements
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const setKeyBtn = document.getElementById('setKeyBtn');
+        const changeKeyBtn = document.getElementById('changeKeyBtn');
+        const keyInputSection = document.getElementById('keyInputSection');
+        const keyConfirm = document.getElementById('keyConfirm');
+        const micBtn = document.getElementById('micBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const emptyState = document.getElementById('emptyState');
+        const errorMessage = document.getElementById('errorMessage');
+        const transcriptBox = document.getElementById('transcriptBox');
+        const transcriptText = document.getElementById('transcriptText');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const micBtnText = document.getElementById('micBtnText');
+
+        // Event listeners
+        setKeyBtn.addEventListener('click', () => {
+            if (apiKeyInput.value.trim()) {
+                apiKey = apiKeyInput.value.trim();
+                keyInputSection.classList.add('hidden');
+                keyConfirm.classList.remove('hidden');
+            }
+        });
+
+        changeKeyBtn.addEventListener('click', () => {
+            keyInputSection.classList.remove('hidden');
+            keyConfirm.classList.add('hidden');
+            apiKeyInput.value = apiKey;
+        });
+
+        micBtn.addEventListener('click', () => {
+            if (!apiKey) {
+                showError('Please set an API key first');
+                return;
+            }
+            if (isListening) {
+                recognition.stop();
+            } else {
+                transcript = '';
+                recognition.start();
+            }
+        });
+
+        sendBtn.addEventListener('click', sendMessage);
+        clearBtn.addEventListener('click', clearChat);
+
+        apiKeyInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                setKeyBtn.click();
+            }
+        });
+
+        // Functions
+        function updateUI() {
+            // Update microphone button
+            if (isListening) {
+                micBtn.classList.add('mic-pulse', 'bg-red-500/90', 'hover:bg-red-600');
+                micBtn.classList.remove('from-cyan-500', 'to-blue-600', 'hover:from-cyan-600', 'hover:to-blue-700');
+                micBtnText.textContent = 'Stop Recording';
+            } else {
+                micBtn.classList.remove('mic-pulse', 'bg-red-500/90', 'hover:bg-red-600');
+                micBtn.classList.add('from-cyan-500', 'to-blue-600', 'hover:from-cyan-600', 'hover:to-blue-700');
+                micBtnText.textContent = 'Start Recording';
+            }
+
+            // Update transcript box
+            if (transcript) {
+                transcriptBox.classList.remove('hidden');
+                transcriptText.textContent = transcript;
+                sendBtn.classList.remove('hidden');
+            } else {
+                transcriptBox.classList.add('hidden');
+                sendBtn.classList.add('hidden');
+            }
+
+            // Update buttons
+            micBtn.disabled = isProcessing || !apiKey;
+            sendBtn.disabled = isProcessing;
+            clearBtn.disabled = isProcessing;
+
+            // Show clear button if there are messages
+            if (messages.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            // Show/hide empty state
+            if (messages.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+        }
+
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorMessage.classList.remove('hidden');
+            setTimeout(() => {
+                errorMessage.classList.add('hidden');
+            }, 5000);
+        }
+
+        async function sendMessage() {
+            if (!transcript.trim() || !apiKey) {
+                showError('Please provide input');
+                return;
+            }
+
+            const userMsg = { role: 'user', content: transcript };
+            messages.push(userMsg);
+            transcript = '';
+            isProcessing = true;
+            updateUI();
+            renderMessages();
+
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01',
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-opus-4-6',
+                        max_tokens: 1024,
+                        messages: [userMsg],
+                    }),
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error?.message || 'API Error');
+                }
+
+                const data = await response.json();
+                const assistantMsg = {
+                    role: 'assistant',
+                    content: data.content[0].text,
+                };
+
+                messages.push(assistantMsg);
+                speakText(data.content[0].text);
+            } catch (err) {
+                showError(`Error: ${err.message}`);
+                messages.push({
+                    role: 'assistant',
+                    content: `I encountered an error: ${err.message}. Please check your API key.`,
+                });
+            } finally {
+                isProcessing = false;
+                updateUI();
+                renderMessages();
+            }
+        }
+
+        function speakText(text) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function clearChat() {
+            messages = [];
+            transcript = '';
+            updateUI();
+            renderMessages();
+        }
+
+        function renderMessages() {
+            loadingIndicator.classList.add('hidden');
+            messagesContainer.innerHTML = '';
+
+            messages.forEach((msg, idx) => {
+                const div = document.createElement('div');
+                div.className = `flex gap-4 animate-fadeIn ${
+                    msg.role === 'user' ? 'justify-end' : 'justify-start'
+                }`;
+
+                const bubble = document.createElement('div');
+                bubble.className = `max-w-2xl px-5 py-4 rounded-2xl ${
+                    msg.role === 'user'
+                        ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white rounded-br-sm'
+                        : 'bg-slate-800/80 border border-slate-700/50 text-slate-100 rounded-bl-sm'
+                }`;
+                bubble.innerHTML = `<p class="text-sm leading-relaxed whitespace-pre-wrap">${escapeHtml(msg.content)}</p>`;
+
+                div.appendChild(bubble);
+                messagesContainer.appendChild(div);
+            });
+
+            if (isProcessing) {
+                loadingIndicator.classList.remove('hidden');
+            }
+
+            // Auto-scroll
+            messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize UI
+        updateUI();
+    </script>
+</body>
+</html>
