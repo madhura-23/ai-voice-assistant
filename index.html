@@ -189,25 +189,48 @@
         let transcript = '';
         let recognition = null;
 
+        // Debug function
+        function debug(msg) {
+            console.log('[Voice Assistant]', msg);
+        }
+
         // Initialize Speech Recognition
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
+        
+        if (!SpeechRecognition) {
+            debug('ERROR: Web Speech API not supported in this browser!');
+            showError('⚠️ Your browser does not support Voice Input. Please use Chrome, Edge, or Safari.');
+        } else {
+            debug('Web Speech API is supported');
+            
+            try {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+                debug('Speech Recognition initialized');
+            } catch (e) {
+                debug('ERROR initializing Speech Recognition: ' + e.message);
+                showError('Error initializing microphone: ' + e.message);
+            }
+        }
+
+        if (recognition) {
 
             recognition.onstart = () => {
+                debug('Recording started');
                 isListening = true;
                 updateUI();
             };
 
             recognition.onresult = (event) => {
+                debug('Recognition result received');
                 let interimTranscript = '';
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const t = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
                         transcript = t;
+                        debug('Final transcript: ' + transcript);
                     } else {
                         interimTranscript += t;
                     }
@@ -216,12 +239,21 @@
             };
 
             recognition.onend = () => {
+                debug('Recording stopped');
                 isListening = false;
                 updateUI();
             };
 
             recognition.onerror = (event) => {
-                showError(`Error: ${event.error}`);
+                debug('ERROR: ' + event.error);
+                const errorMessages = {
+                    'no-speech': 'No speech detected. Please try again.',
+                    'audio-capture': 'No microphone found. Check permissions.',
+                    'not-allowed': 'Microphone permission denied. Please allow access.',
+                    'network': 'Network error. Check your connection.',
+                    'service-not-allowed': 'Speech service is not available.'
+                };
+                showError('🎤 ' + (errorMessages[event.error] || 'Error: ' + event.error));
                 isListening = false;
                 updateUI();
             };
@@ -260,15 +292,31 @@
         });
 
         micBtn.addEventListener('click', () => {
+            debug('Mic button clicked');
+            
             if (!apiKey) {
                 showError('Please set an API key first');
                 return;
             }
+            
+            if (!recognition) {
+                showError('❌ Voice input is not supported in your browser. Use Chrome, Edge, or Safari.');
+                return;
+            }
+            
             if (isListening) {
+                debug('Stopping recording');
                 recognition.stop();
             } else {
+                debug('Starting recording...');
                 transcript = '';
-                recognition.start();
+                try {
+                    recognition.start();
+                    debug('Recognition.start() called successfully');
+                } catch (e) {
+                    debug('ERROR calling recognition.start(): ' + e.message);
+                    showError('❌ Could not start recording: ' + e.message);
+                }
             }
         });
 
