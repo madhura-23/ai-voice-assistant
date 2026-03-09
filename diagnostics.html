@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Assistant - Diagnostics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white p-8">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-4xl font-bold mb-8">🔧 Voice Assistant Diagnostics</h1>
+
+        <!-- Browser Check -->
+        <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-4">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <span id="browserStatus">❓</span> Browser Support
+            </h2>
+            <div id="browserInfo" class="text-slate-300 space-y-2"></div>
+        </div>
+
+        <!-- Microphone Check -->
+        <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-4">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <span id="micStatus">❓</span> Microphone Access
+            </h2>
+            <div id="micInfo" class="text-slate-300 space-y-2 mb-4"></div>
+            <button id="requestMicBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-all">
+                Request Microphone Permission
+            </button>
+        </div>
+
+        <!-- Web Speech API Check -->
+        <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-4">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <span id="speechStatus">❓</span> Web Speech API
+            </h2>
+            <div id="speechInfo" class="text-slate-300 space-y-2 mb-4"></div>
+            <button id="testSpeechBtn" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-semibold transition-all">
+                Test Speech Recognition
+            </button>
+        </div>
+
+        <!-- Text-to-Speech Check -->
+        <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-4">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <span id="ttsStatus">❓</span> Text-to-Speech
+            </h2>
+            <div id="ttsInfo" class="text-slate-300 space-y-2 mb-4"></div>
+            <button id="testTtsBtn" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold transition-all">
+                Test Speaker (Say "Hello")
+            </button>
+        </div>
+
+        <!-- Console Output -->
+        <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-4">
+            <h2 class="text-xl font-bold mb-4">📋 Console Output</h2>
+            <div id="console" class="bg-slate-900 p-4 rounded font-mono text-sm max-h-64 overflow-y-auto text-slate-300">
+                <div>Ready to test...</div>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="flex gap-3">
+            <a href="index.html" class="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg font-semibold text-center transition-all">
+                ← Back to Assistant
+            </a>
+            <button id="clearConsoleBtn" class="px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg font-semibold transition-all">
+                Clear Console
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const consoleOutput = document.getElementById('console');
+        let recognitionTest = null;
+
+        function log(message, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const line = document.createElement('div');
+            line.className = {
+                'info': 'text-slate-300',
+                'success': 'text-green-400',
+                'error': 'text-red-400',
+                'warning': 'text-yellow-400'
+            }[type] || 'text-slate-300';
+            line.textContent = `[${time}] ${message}`;
+            consoleOutput.appendChild(line);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        // Browser Check
+        function checkBrowser() {
+            const info = document.getElementById('browserInfo');
+            const status = document.getElementById('browserStatus');
+            
+            info.innerHTML = `
+                <p><strong>Browser:</strong> ${navigator.userAgent.split('Chrome/')[1]?.split(' ')[0] ? 'Chrome' : navigator.userAgent.includes('Safari') ? 'Safari' : 'Other'}</p>
+                <p><strong>Platform:</strong> ${navigator.platform}</p>
+                <p><strong>User Agent:</strong> ${navigator.userAgent.substring(0, 60)}...</p>
+            `;
+            
+            status.textContent = '✅';
+            log('Browser detected: ' + navigator.platform, 'success');
+        }
+
+        // Microphone Check
+        document.getElementById('requestMicBtn').addEventListener('click', async () => {
+            log('Requesting microphone access...', 'info');
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                document.getElementById('micStatus').textContent = '✅';
+                document.getElementById('micInfo').innerHTML = '<p class="text-green-400">✅ Microphone access granted!</p>';
+                log('✅ Microphone access granted', 'success');
+                // Stop the stream
+                stream.getTracks().forEach(track => track.stop());
+            } catch (error) {
+                document.getElementById('micStatus').textContent = '❌';
+                document.getElementById('micInfo').innerHTML = `<p class="text-red-400">❌ Error: ${error.message}</p>`;
+                log('❌ Microphone access denied: ' + error.message, 'error');
+            }
+        });
+
+        // Web Speech API Check
+        function checkSpeechAPI() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const status = document.getElementById('speechStatus');
+            const info = document.getElementById('speechInfo');
+
+            if (SpeechRecognition) {
+                status.textContent = '✅';
+                info.innerHTML = '<p class="text-green-400">✅ Web Speech API is supported</p>';
+                log('✅ Web Speech API available', 'success');
+            } else {
+                status.textContent = '❌';
+                info.innerHTML = '<p class="text-red-400">❌ Web Speech API is NOT supported in your browser</p>';
+                log('❌ Web Speech API NOT available', 'error');
+            }
+        }
+
+        document.getElementById('testSpeechBtn').addEventListener('click', () => {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                log('❌ Web Speech API not available', 'error');
+                return;
+            }
+
+            log('🎤 Starting speech test... Say something!', 'info');
+            
+            recognitionTest = new SpeechRecognition();
+            recognitionTest.lang = 'en-US';
+            recognitionTest.onstart = () => log('Recording started...', 'info');
+            recognitionTest.onresult = (event) => {
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    log(`Heard: "${transcript}"`, 'success');
+                }
+            };
+            recognitionTest.onerror = (event) => log(`Error: ${event.error}`, 'error');
+            recognitionTest.onend = () => log('Recording ended', 'info');
+
+            try {
+                recognitionTest.start();
+            } catch (e) {
+                log(`Error starting: ${e.message}`, 'error');
+            }
+        });
+
+        // Text-to-Speech Check
+        function checkTTS() {
+            const status = document.getElementById('ttsStatus');
+            const info = document.getElementById('ttsInfo');
+
+            if (window.speechSynthesis) {
+                status.textContent = '✅';
+                info.innerHTML = '<p class="text-green-400">✅ Text-to-Speech is supported</p>';
+                log('✅ Text-to-Speech available', 'success');
+            } else {
+                status.textContent = '❌';
+                info.innerHTML = '<p class="text-red-400">❌ Text-to-Speech is NOT supported</p>';
+                log('❌ Text-to-Speech NOT available', 'error');
+            }
+        }
+
+        document.getElementById('testTtsBtn').addEventListener('click', () => {
+            log('🔊 Testing text-to-speech...', 'info');
+            
+            if (!window.speechSynthesis) {
+                log('❌ Text-to-Speech not available', 'error');
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance('Hello, the voice assistant is working!');
+            utterance.onstart = () => log('Playing audio...', 'info');
+            utterance.onend = () => log('✅ Audio complete', 'success');
+            utterance.onerror = (e) => log(`Error: ${e.error}`, 'error');
+            
+            try {
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                log(`Error: ${e.message}`, 'error');
+            }
+        });
+
+        document.getElementById('clearConsoleBtn').addEventListener('click', () => {
+            consoleOutput.innerHTML = '<div>Console cleared...</div>';
+            log('Console cleared', 'info');
+        });
+
+        // Run all checks on load
+        window.addEventListener('load', () => {
+            log('Starting diagnostics...', 'info');
+            checkBrowser();
+            checkSpeechAPI();
+            checkTTS();
+            log('Diagnostics complete! Try the tests above.', 'success');
+        });
+    </script>
+</body>
+</html>
