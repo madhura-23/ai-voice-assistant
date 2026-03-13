@@ -11,7 +11,6 @@
 
 **A powerful, production-ready AI voice assistant with real-time speech recognition, natural language processing, and voice synthesis.**
 
-[🚀 Live Demo](#demo) • [📚 Documentation](#documentation) • [🎯 Features](#features) • [⚙️ Installation](#installation)
 
 </div>
 
