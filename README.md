@@ -403,12 +403,6 @@ Contributions are welcome! Here's how:
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 🙏 Acknowledgments
 
 - [Anthropic](https://anthropic.com) for Claude AI API
@@ -418,14 +412,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 📞 Support & Contact
-
-- 📧 Email: support@example.com
-- 🐦 Twitter: [@example](https://twitter.com)
-- 💬 Discord: [Join Community](https://discord.gg/example)
-- 📖 Docs: [Full Documentation](https://docs.example.com)
-
----
 
 ## 📊 Project Stats
 
@@ -446,12 +432,3 @@ If you found this project helpful, please:
 - 🐛 Report bugs
 - ✨ Suggest improvements
 
----
-
-<div align="center">
-
-**[⬆ back to top](#-ai-voice-assistant---professional-edition)**
-
-Made with ❤️ by the community | [MIT License](LICENSE)
-
-</div>
